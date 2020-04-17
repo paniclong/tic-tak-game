@@ -52,7 +52,10 @@ func (bot *Bot) setCurrentCell() {
 	bot.currentCell = bot.leftCells[randomCell]
 
 	// Удаляем из остатка текущую ячейку
-	bot.leftCells[len(bot.leftCells)-1], bot.leftCells[randomCell] = bot.leftCells[randomCell], bot.leftCells[len(bot.leftCells)-1]
+	bot.leftCells[len(bot.leftCells)-1],
+		bot.leftCells[randomCell] = bot.leftCells[randomCell],
+		bot.leftCells[len(bot.leftCells)-1]
+
 	bot.leftCells = bot.leftCells[:len(bot.leftCells)-1]
 }
 
