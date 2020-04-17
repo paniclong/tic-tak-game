@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"reflect"
 	"time"
 )
 
@@ -63,137 +62,92 @@ var numberCombinations = [][]int{
 	{2, 2},
 }
 
-func main() {
-	var field = [3][3]string{}
+// Размер поля
+const size = 3
 
-	for i := 0; i < 3; i++ {
-		for j := 0; j < 3; j++ {
-			field[i][j] = ""
+func main() {
+	var field [size][size]string
+
+	for i := 0; i < size; i++ {
+		for j := 0; j < size; j++ {
+			field[i][j] = " "
 		}
 	}
 
 	rand.Seed(time.Now().UnixNano())
 
-	var currentCell []int
-	var selectedUserCell []int
-	var flag = false
+	bot := *new(Bot)
+	player := *new(Player)
 
-	_, selectedCombination := generateNewCombination()
-	leftCombination := howMuchToLeftCombination(currentCell, selectedCombination)
-	currentCell = generateNewCell(leftCombination)
-	leftCombination = howMuchToLeftCombination(currentCell, selectedCombination)
+	bot.setCurrentCombination(0)
+	bot.setLeftCells()
+	bot.checkPreSetCombination(field)
+	bot.setCurrentCell()
 
 	for {
-		if len(combinations) == 0 {
-			break
-		}
-
-		result := checkAvailable(selectedUserCell, selectedCombination)
-
-		// Если пользователь ввел ту комбинацию которую уничтожает бота,
-		// то перегенирируем комбинацию
-		if true == result {
-			_, selectedCombination = generateNewCombination()
-
-			leftCombination = howMuchToLeftCombination(currentCell, selectedCombination)
-			currentCell = generateNewCell(leftCombination)
-		}
-
-		field, _ = changeField(field, currentCell, true)
+		changeField(&field, bot.getCurrentCell(), true)
 		renderField(field)
-
-		if len(leftCombination) == 0 {
-			fmt.Println("bot win!")
-			break
-		}
 
 		for {
 			// Принимаем значение от пользователя
 			var input int
-			fmt.Fscan(os.Stdin, &input)
+			fmt.Println("Введите номер ячейки(от 1 до 9): ")
+			_, err := fmt.Fscan(os.Stdin, &input)
 
-			selectedUserCell = numberCombinations[input-1]
-			field, flag = changeField(field, selectedUserCell, false)
+			if err != nil {
+				panic("Unknown error!")
+			}
 
-			if true == flag {
+			player.currentCell = numberCombinations[input-1]
+
+			if checkCell(field, player.currentCell) == true {
+				changeField(&field, player.currentCell, false)
+
+				if player.checkCombination(field) == true {
+					renderField(field)
+
+					fmt.Println("Победил игрок!")
+
+					return
+				}
+
 				break
 			}
 
-			fmt.Println("Wrong cell")
+			fmt.Println("Некорректный номер ячейки")
 		}
 
-		leftCombination = howMuchToLeftCombination(currentCell, leftCombination)
+		if bot.checkAndMaybeDeleteAvailableCombination(player.currentCell) == true {
+			if len(combinations) == 0 {
+				changeField(&field, bot.getCurrentCell(), true)
+				renderField(field)
 
-		if len(leftCombination) == 0 {
-			fmt.Println("bot win!")
-			break
-		}
+				fmt.Println("Ничья!")
 
-		currentCell = generateNewCell(leftCombination)
-	}
-
-	return
-}
-
-func generateNewCombination() (int, [][]int) {
-	var keys []int
-	var count = 0
-
-	for i := range combinations {
-		keys = append(keys, i)
-
-		count++
-	}
-
-	key := rand.Intn(len(keys))
-
-	return count, combinations[keys[key]]
-}
-
-// Проверяем и удаляем комбинации которые выбрал пользователь
-func checkAvailable(cell []int, botCombination [][]int) bool {
-	flag := false
-
-	for i, value := range combinations {
-		if reflect.DeepEqual(botCombination, value) == true {
-			for _, value := range botCombination {
-				if reflect.DeepEqual(value, cell) == true {
-					flag = true
-				}
+				return
 			}
+
+			bot.generateNewCurrentCombination()
 		}
 
-		for _, value2 := range value {
-			if reflect.DeepEqual(cell, value2) == true {
-				delete(combinations, i)
-			}
-		}
-	}
+		bot.setLeftCells()
+		bot.checkPreSetCombination(field)
+		bot.setCurrentCell()
 
-	return flag
-}
+		if len(bot.getLeftCells()) == 0 {
+			changeField(&field, bot.getCurrentCell(), true)
+			renderField(field)
 
-func howMuchToLeftCombination(cell []int, selComb [][]int) [][]int {
-	var array [][]int
+			fmt.Println("Бот выиграл!")
 
-	for _, value := range selComb {
-		if reflect.DeepEqual(cell, value) != true {
-			array = append(array, value)
+			return
 		}
 	}
-
-	return array
 }
 
-func generateNewCell(availableComb [][]int) []int {
-	cell := rand.Intn(len(availableComb))
-
-	return availableComb[cell]
-}
-
-func renderField(field [3][3]string) {
-	for i := 0; i < 3; i++ {
-		for j := 0; j < 3; j++ {
+func renderField(field [size][size]string) {
+	for i := 0; i < size; i++ {
+		for j := 0; j < size; j++ {
 			fmt.Print("[ ", field[i][j], " ]")
 		}
 
@@ -201,18 +155,20 @@ func renderField(field [3][3]string) {
 	}
 }
 
-func changeField(field [3][3]string, cell []int, isBot bool) ([3][3]string, bool) {
-	flag := false
+func checkCell(field [size][size]string, cell []int) bool {
+	if field[cell[0]][cell[1]] == " " {
+		return true
+	}
 
-	if len(field[cell[0]][cell[1]]) == 0 {
+	return false
+}
+
+func changeField(field *[size][size]string, cell []int, isBot bool) {
+	if field[cell[0]][cell[1]] == " " {
 		if isBot {
 			field[cell[0]][cell[1]] = "X"
 		} else {
 			field[cell[0]][cell[1]] = "O"
 		}
-
-		flag = true
 	}
-
-	return field, flag
 }
