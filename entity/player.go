@@ -1,4 +1,4 @@
-package main
+package entity
 
 var playerCombination = map[int][][]int{
 	1: {
@@ -47,9 +47,17 @@ type Player struct {
 	currentCell []int
 }
 
+func (player *Player) SetCurrentCell(cell []int) {
+	player.currentCell = cell
+}
+
+func (player *Player) GetCurrentCell() []int {
+	return player.currentCell
+}
+
 // Для игрока мы просто проверяем чтобы комбинации ноликов была в ряд
 // @todo fix this
-func (player *Player) checkCombination(field [size][size]string) bool {
+func (player *Player) CheckCombination(field [size][size]string) bool {
 	var position []int
 
 	for _, value := range playerCombination {

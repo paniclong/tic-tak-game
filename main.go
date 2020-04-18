@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/paniclong/tic-tak-game/entity"
 	"log"
 	"math/rand"
 	"os"
@@ -77,16 +78,16 @@ func main() {
 
 	rand.Seed(time.Now().UnixNano())
 
-	bot := *new(Bot)
-	player := *new(Player)
+	bot := *new(entity.Bot)
+	player := *new(entity.Player)
 
-	bot.setCurrentCombination(0)
-	bot.setLeftCells()
-	bot.checkPreSetCombination(field)
-	bot.setCurrentCell()
+	bot.SetCurrentCombination(0)
+	bot.SetLeftCells()
+	bot.CheckPreSetCombination(field)
+	bot.SetCurrentCell()
 
 	for {
-		changeField(&field, bot.getCurrentCell(), true)
+		changeField(&field, bot.GetCurrentCell(), true)
 		renderField(field)
 
 		for {
@@ -99,12 +100,12 @@ func main() {
 				log.Fatalf("Error: %v", err)
 			}
 
-			player.currentCell = numberCombinations[input-1]
+			player.SetCurrentCell(numberCombinations[input-1])
 
-			if checkCell(field, player.currentCell) == true {
-				changeField(&field, player.currentCell, false)
+			if checkCell(field, player.GetCurrentCell()) == true {
+				changeField(&field, player.GetCurrentCell(), false)
 
-				if player.checkCombination(field) == true {
+				if player.CheckCombination(field) == true {
 					renderField(field)
 
 					fmt.Println("Победил игрок!")
@@ -118,9 +119,9 @@ func main() {
 			fmt.Println("Некорректный номер ячейки")
 		}
 
-		if bot.checkAndMaybeDeleteAvailableCombination(player.currentCell) == true {
+		if bot.CheckAndMaybeDeleteAvailableCombination(player.GetCurrentCell()) == true {
 			if len(combinations) == 0 {
-				changeField(&field, bot.getCurrentCell(), true)
+				changeField(&field, bot.GetCurrentCell(), true)
 				renderField(field)
 
 				fmt.Println("Ничья!")
@@ -128,15 +129,15 @@ func main() {
 				return
 			}
 
-			bot.generateNewCurrentCombination()
+			bot.GenerateNewCurrentCombination()
 		}
 
-		bot.setLeftCells()
-		bot.checkPreSetCombination(field)
-		bot.setCurrentCell()
+		bot.SetLeftCells()
+		bot.CheckPreSetCombination(field)
+		bot.SetCurrentCell()
 
-		if len(bot.getLeftCells()) == 0 {
-			changeField(&field, bot.getCurrentCell(), true)
+		if len(bot.GetLeftCells()) == 0 {
+			changeField(&field, bot.GetCurrentCell(), true)
 			renderField(field)
 
 			fmt.Println("Бот выиграл!")

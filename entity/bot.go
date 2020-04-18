@@ -1,9 +1,52 @@
-package main
+package entity
 
 import (
 	"math/rand"
 	"reflect"
 )
+
+var combinations = map[int][][]int{
+	1: {
+		{0, 0},
+		{0, 1},
+		{0, 2},
+	},
+	2: {
+		{1, 0},
+		{1, 1},
+		{1, 2},
+	},
+	3: {
+		{2, 0},
+		{2, 1},
+		{2, 2},
+	},
+	4: {
+		{0, 0},
+		{1, 0},
+		{2, 0},
+	},
+	5: {
+		{0, 1},
+		{1, 1},
+		{2, 1},
+	},
+	6: {
+		{0, 2},
+		{1, 2},
+		{2, 2},
+	},
+	7: {
+		{0, 0},
+		{1, 1},
+		{2, 2},
+	},
+	8: {
+		{0, 2},
+		{1, 1},
+		{2, 0},
+	},
+}
 
 type Bot struct {
 	currentCell        []int
@@ -12,7 +55,7 @@ type Bot struct {
 }
 
 // Ставим новую комбинацию боту
-func (bot *Bot) setCurrentCombination(key int) *Bot {
+func (bot *Bot) SetCurrentCombination(key int) *Bot {
 	if key != 0 {
 		bot.currentCombination = combinations[key]
 
@@ -40,14 +83,14 @@ func (bot *Bot) setCurrentCombination(key int) *Bot {
 }
 
 // Ставим остаток
-func (bot *Bot) setLeftCells() *Bot {
+func (bot *Bot) SetLeftCells() *Bot {
 	bot.leftCells = bot.currentCombination
 
 	return bot
 }
 
 // Ставим новую текущую ячейку для бота
-func (bot *Bot) setCurrentCell() {
+func (bot *Bot) SetCurrentCell() {
 	randomCell := rand.Intn(len(bot.leftCells))
 	bot.currentCell = bot.leftCells[randomCell]
 
@@ -59,22 +102,24 @@ func (bot *Bot) setCurrentCell() {
 	bot.leftCells = bot.leftCells[:len(bot.leftCells)-1]
 }
 
-func (bot *Bot) getCurrentCombination() [][]int {
+func (bot *Bot) GetCurrentCombination() [][]int {
 	return bot.currentCombination
 }
 
-func (bot *Bot) getLeftCells() [][]int {
+func (bot *Bot) GetLeftCells() [][]int {
 	return bot.leftCells
 }
 
-func (bot *Bot) getCurrentCell() []int {
+func (bot *Bot) GetCurrentCell() []int {
 	return bot.currentCell
 }
+
+const size = 3
 
 // Перед проставлением новой комбинации проверяем что,
 // там уже не стояло предыдущее значение с предыдущей комбинации
 // и если стоит, то в оставшиеся ячейки записываем остаток
-func (bot *Bot) checkPreSetCombination(field [size][size]string) *Bot {
+func (bot *Bot) CheckPreSetCombination(field [size][size]string) *Bot {
 	var array [][]int
 
 	for _, value := range bot.leftCells {
@@ -93,7 +138,7 @@ func (bot *Bot) checkPreSetCombination(field [size][size]string) *Bot {
 }
 
 // Если предыдущая комбинация бота была нарушена пользователем, то удаляем её из всех возможных комбинаций
-func (bot *Bot) checkAndMaybeDeleteAvailableCombination(userCell []int) bool {
+func (bot *Bot) CheckAndMaybeDeleteAvailableCombination(userCell []int) bool {
 	isDeleted := false
 
 	for i, value := range combinations {
@@ -118,7 +163,7 @@ func (bot *Bot) checkAndMaybeDeleteAvailableCombination(userCell []int) bool {
 // Метод генерируем новую комбинацию
 // Выбираем рядом доступные комбинации
 // Если их нет, выберем рандомную
-func (bot *Bot) generateNewCurrentCombination() {
+func (bot *Bot) GenerateNewCurrentCombination() {
 	var keys []int
 
 	for i, value := range combinations {
@@ -130,8 +175,8 @@ func (bot *Bot) generateNewCurrentCombination() {
 	}
 
 	if len(keys) > 0 {
-		bot.setCurrentCombination(keys[rand.Intn(len(keys))])
+		bot.SetCurrentCombination(keys[rand.Intn(len(keys))])
 	} else {
-		bot.setCurrentCombination(0)
+		bot.SetCurrentCombination(0)
 	}
 }
