@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"time"
@@ -95,7 +96,7 @@ func main() {
 			_, err := fmt.Fscan(os.Stdin, &input)
 
 			if err != nil {
-				panic("Unknown error!")
+				log.Fatalf("Error: %v", err)
 			}
 
 			player.currentCell = numberCombinations[input-1]
