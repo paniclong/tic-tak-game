@@ -5,7 +5,30 @@ services:
     restart: always
     build:
       context: ./
+      dockerfile: Dockerfile
     volumes:
       - ./:/app:rw
+    environment:
+      SESSION_SECURE_KEY: 'SD8961y2uihgsdkja87&^**(12N12H932lxsdaG321&SD23fd?}SDF13q24ef{'
+      FRONT_DOMAIN: 'localhost'
+      FRONT_PORT: '9000'
+      SERVER_PORT: '8080'
+      TYPE_GAME: 'web' # Тип игры web or console
     ports:
-      - '80:80'
+      - '8080:8080'
+
+  react:
+    restart: always
+    command: sh -c "npm i && npm run start:dev"
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app:rw
+    environment:
+      FRONT_DOMAIN: '0.0.0.0'
+      FRONT_PORT: '9000'
+      SERVER_DOMAIN: 'localhost'
+      SERVER_PORT: '8080'
+    ports:
+      - '9000:9000'

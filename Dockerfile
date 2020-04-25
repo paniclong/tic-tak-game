@@ -5,8 +5,10 @@ RUN apk update && apk upgrade && \
 
 WORKDIR /app
 
-COPY . .
+COPY ./ /app
 
-RUN go build -o main .
+RUN go mod download
 
-CMD ["./main"]
+RUN go get github.com/githubnemo/CompileDaemon
+
+ENTRYPOINT CompileDaemon --build="go build main.go" --command=./main
