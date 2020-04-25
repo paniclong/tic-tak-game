@@ -1,0 +1,43 @@
+{
+  "name": "tic-tak-game",
+  "version": "1.0.0",
+  "description": "",
+  "author": "paniclong",
+  "license": "MIT",
+  "scripts": {
+    "start:dev": "webpack-dev-server",
+    "start": "webpack"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.5",
+    "@babel/preset-react": "^7.9.4",
+    "@babel/plugin-proposal-class-properties": "^7.8.3",
+    "babel-loader": "^8.1.0",
+    "css-loader": "^3.5.2",
+    "style-loader": "^1.1.4",
+    "eslint": "^6.8.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-router": "^5.1.2",
+    "react-redux": "^7.2.0",
+    "prop-types": "^15.7.2",
+    "redux": "^4.0.5",
+    "webpack": "^4.42.1",
+    "webpack-dev-server": "^3.10.3",
+    "webpack-cli": "^3.3.11"
+  },
+  "babel": {
+    "presets": [
+      "@babel/env",
+      "@babel/react"
+    ],
+    "plugins": [
+      [
+        "@babel/plugin-proposal-class-properties"
+      ]
+    ]
+  },
+  "main": "index.js"
+}

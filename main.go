@@ -3,54 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/paniclong/tic-tak-game/entity"
+	"github.com/paniclong/tic-tak-game/server"
 	"log"
 	"math/rand"
 	"os"
 	"time"
 )
-
-var combinations = map[int][][]int{
-	1: {
-		{0, 0},
-		{0, 1},
-		{0, 2},
-	},
-	2: {
-		{1, 0},
-		{1, 1},
-		{1, 2},
-	},
-	3: {
-		{2, 0},
-		{2, 1},
-		{2, 2},
-	},
-	4: {
-		{0, 0},
-		{1, 0},
-		{2, 0},
-	},
-	5: {
-		{0, 1},
-		{1, 1},
-		{2, 1},
-	},
-	6: {
-		{0, 2},
-		{1, 2},
-		{2, 2},
-	},
-	7: {
-		{0, 0},
-		{1, 1},
-		{2, 2},
-	},
-	8: {
-		{0, 2},
-		{1, 1},
-		{2, 0},
-	},
-}
 
 var numberCombinations = [][]int{
 	{0, 0},
@@ -68,6 +26,14 @@ var numberCombinations = [][]int{
 const size = 3
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
+	if os.Getenv("TYPE_GAME") == "web" {
+		fmt.Println("Started server...")
+
+		server.Run()
+	}
+
 	var field [size][size]string
 
 	for i := 0; i < size; i++ {
@@ -81,9 +47,12 @@ func main() {
 	bot := *new(entity.Bot)
 	player := *new(entity.Player)
 
+	bot.Initialize()
+	player.Initialize()
+
 	bot.SetCurrentCombination(0)
 	bot.SetLeftCells()
-	bot.CheckPreSetCombination(field)
+	bot.CheckPreSetCombination(&field)
 	bot.SetCurrentCell()
 
 	for {
@@ -94,8 +63,8 @@ func main() {
 			// Принимаем значение от пользователя
 			var input int
 			fmt.Println("Введите номер ячейки(от 1 до 9): ")
-			_, err := fmt.Fscan(os.Stdin, &input)
 
+			_, err := fmt.Fscan(os.Stdin, &input)
 			if err != nil {
 				log.Fatalf("Error: %v", err)
 			}
@@ -105,7 +74,7 @@ func main() {
 			if checkCell(field, player.GetCurrentCell()) == true {
 				changeField(&field, player.GetCurrentCell(), false)
 
-				if player.CheckCombination(field) == true {
+				if player.CheckCombination(&field) == true {
 					renderField(field)
 
 					fmt.Println("Победил игрок!")
@@ -120,7 +89,7 @@ func main() {
 		}
 
 		if bot.CheckAndMaybeDeleteAvailableCombination(player.GetCurrentCell()) == true {
-			if len(combinations) == 0 {
+			if len(bot.GetAllCombinations()) == 0 {
 				changeField(&field, bot.GetCurrentCell(), true)
 				renderField(field)
 
@@ -130,10 +99,10 @@ func main() {
 			}
 
 			bot.GenerateNewCurrentCombination()
+			bot.SetLeftCells()
 		}
 
-		bot.SetLeftCells()
-		bot.CheckPreSetCombination(field)
+		bot.CheckPreSetCombination(&field)
 		bot.SetCurrentCell()
 
 		if len(bot.GetLeftCells()) == 0 {

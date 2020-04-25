@@ -44,23 +44,30 @@ var playerCombination = map[int][][]int{
 }
 
 type Player struct {
-	currentCell []int
+	CurrentCell []int
+	Combination map[int][][]int
+}
+
+func (player *Player) Initialize() *Player {
+	player.Combination = playerCombination
+
+	return player
 }
 
 func (player *Player) SetCurrentCell(cell []int) {
-	player.currentCell = cell
+	player.CurrentCell = cell
 }
 
 func (player *Player) GetCurrentCell() []int {
-	return player.currentCell
+	return player.CurrentCell
 }
 
 // Для игрока мы просто проверяем чтобы комбинации ноликов была в ряд
 // @todo fix this
-func (player *Player) CheckCombination(field [size][size]string) bool {
+func (player *Player) CheckCombination(field *[size][size]string) bool {
 	var position []int
 
-	for _, value := range playerCombination {
+	for _, value := range player.Combination {
 		for _, value2 := range value {
 			if len(value2) != 0 {
 				position = append(position, value2[0], value2[1])
