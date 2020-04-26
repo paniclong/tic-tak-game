@@ -29,7 +29,7 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	if os.Getenv("TYPE_GAME") == "web" {
-		fmt.Println("Started server...")
+		fmt.Println("Starting server...")
 
 		server.Run()
 	}

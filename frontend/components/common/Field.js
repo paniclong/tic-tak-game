@@ -5,32 +5,23 @@ import Button from "./Button";
 
 import Request from "../repository/Request";
 
-const styles = {
-  width: '33%',
-  minWidth: '33%',
-  flexGrow: '1',
-  height: '2rem'
-}
-
-const divStyle = {
-  display: "flex",
-  flexWrap: "wrap",
-  height: "5rem"
-}
+import '../style/Field.scss'
 
 export default class Field extends React.Component {
   static propTypes = {
     isGameStarted: PropTypes.bool.isRequired,
+    isSavedGame: PropTypes.bool.isRequired,
     botCell: PropTypes.string.isRequired,
-    savedCells: PropTypes.array.isRequired,
+    savedCells: PropTypes.object.isRequired,
     onEndGame: PropTypes.func.isRequired,
     onStartGame: PropTypes.func.isRequired,
+    onContinueGame: PropTypes.func.isRequired,
   }
 
   static defaultProps = {
     isGameStarted: false,
     botCell: '',
-    savedCells: [],
+    savedCells: {},
     onEndGame: null,
     onStartGame: null,
   }
@@ -91,8 +82,10 @@ export default class Field extends React.Component {
 
       this.blockField(copyField, playerCellId, false)
 
-      if (typeof botCellId !== "undefined") {
-        this.blockField(copyField, botCellId, true)
+      if (whoWin !== "draw") {
+        if (typeof botCellId !== "undefined") {
+          this.blockField(copyField, botCellId, true)
+        }
       }
 
       if (whoWin !== "") {
@@ -172,9 +165,9 @@ export default class Field extends React.Component {
   }
 
   /**
-   * Метод-монстр, выполняет две выжные функции
+   * Метод-монстр, выполняет две важные функции
    *
-   * 1. В начали инициализации, когда стартанули игру, проставляем ячейку для бота
+   * 1. В начале инициализации, когда стартанули игру, проставляем ячейку для бота
    * 2. Если в сессии сохранена текущая игра, то парсим ячейки бота и игрока и проставляем в массив
    */
   componentDidMount() {
@@ -203,12 +196,30 @@ export default class Field extends React.Component {
   }
 
   render() {
+    const fieldClass = 'field' + (this.props.isSavedGame || this.state.isEndGame  ? ' disabled' : '')
+
     return (
-      <div>
+      <div className='wrapper-field'>
+        {
+          this.props.isSavedGame
+            ?
+            <div className='continue-game'>
+              <p>У вас есть сохраненная игра, желаете продолжить ?</p>
+              <Button
+                value={'Да'}
+                onClick={this.props.onContinueGame}
+              />
+              <Button
+                value={'Нет'}
+                onClick={(e) => this.onBackToMenu(e)}
+              />
+            </div>
+            : ''
+        }
         {
           this.state.isEndGame
             ?
-            <div>
+            <div className='restart-modal'>
               <p>{this.state.whoWin} </p>
               <Button
                 value={'Вернуться в меню'}
@@ -221,15 +232,14 @@ export default class Field extends React.Component {
             </div>
             : ''
         }
-        <div style={divStyle}>
+        <div className={fieldClass}>
           {
             this.state.field.map((el) =>
               <Button
                 key={el.order}
-                disabled={el.isDisabled}
+                disabled={el.isDisabled || this.props.isSavedGame}
                 onClick={() => this.onClick(el.order)}
                 value={el.value}
-                styles={styles}
               />
             )
           }

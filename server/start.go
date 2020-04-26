@@ -244,6 +244,10 @@ func setCell(writer http.ResponseWriter, request *http.Request) {
 		if len(currentGame.Bot.GetAllCombinations()) == 0 {
 			changeField(&currentGame.Field, currentGame.Bot.GetCurrentCell(), true)
 
+			if currentGame.WhoStart == "player" {
+				response["cell"] = convertToFrontCombination(currentGame.Bot.GetCurrentCell())
+			}
+
 			response["win"] = "draw"
 
 			encodedData, _ := json.Marshal(response)
@@ -362,6 +366,33 @@ func checkCurrentSessionGame(writer http.ResponseWriter, request *http.Request) 
 	writer.WriteHeader(http.StatusOK)
 }
 
+// Принудительно завершаем игру, если нужно
+func forceFinishCurrentGame(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Add("Access-Control-Allow-Origin", frontServer)
+	writer.Header().Add("Access-Control-Allow-Credentials", "true")
+
+	session, err := store.Get(request, "session")
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if session.Values["game"] == nil {
+		writer.WriteHeader(http.StatusNoContent)
+
+		return
+	}
+
+	session.Values["game"] = nil
+
+	err = session.Save(request, writer)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	writer.WriteHeader(http.StatusOK)
+}
+
 func Run() {
 	gob.Register(&Game{})
 
@@ -376,6 +407,7 @@ func Run() {
 	http.HandleFunc("/start", startGame)
 	http.HandleFunc("/set", setCell)
 	http.HandleFunc("/check", checkCurrentSessionGame)
+	http.HandleFunc("/finish", forceFinishCurrentGame)
 
 	fmt.Println("Server successfully started!")
 

@@ -44,6 +44,14 @@ class Request {
   checkCurrentGame() {
     return this.axios.get('check')
   }
+
+  // noinspection JSValidateJSDoc
+  /**
+   * @returns {Promise<AxiosResponse<any>>}
+   */
+  finishCurrentGame() {
+    return this.axios.get('finish')
+  }
 }
 
 export default new Request
