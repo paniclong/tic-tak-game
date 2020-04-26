@@ -1,0 +1,60 @@
+.wrapper-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  div {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+
+    &.continue-game, &.restart-modal {
+      position: absolute;
+      font-size: 2rem;
+
+      p {
+        margin-bottom: 1rem;
+      }
+
+      button {
+        margin-bottom: 1rem;
+
+        font-size: 1.3rem;
+        width: 9rem;
+      }
+    }
+  }
+
+  .field {
+    $maxWidth: 21rem;
+    $countButton: 3rem;
+
+    flex-wrap: wrap;
+    flex-direction: row;
+    max-width: $maxWidth;
+
+    border: 1px solid black;
+
+    &.disabled {
+      z-index: -1;
+      opacity: 0.4;
+    }
+
+    button {
+      height: 7rem;
+      min-width: $maxWidth / $countButton + rem;
+
+      background-color: #ff5555;
+      padding: 0;
+      border: 1px solid black;
+      color: black;
+      font-size: 3rem;
+
+      &:hover {
+        background-color: red;
+      }
+    }
+  }
+}

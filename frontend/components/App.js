@@ -4,10 +4,13 @@ import React from "react";
 import Selector from "./common/Selector";
 import Field from "./common/Field";
 
+import './style/App.scss'
+
 export default class App extends React.Component {
   state = {
     info: 0,
     isGameStarted: false,
+    isSavedGame: false,
     whoStartGame: 'bot',
     botCell: '',
     savedCells: [],
@@ -19,6 +22,7 @@ export default class App extends React.Component {
     this.onStartGame = this.onStartGame.bind(this)
     this.onChangeWhoStartGame = this.onChangeWhoStartGame.bind(this)
     this.onEndGame = this.onEndGame.bind(this)
+    this.onContinueGame = this.onContinueGame.bind(this)
   }
 
   onStartGame(e) {
@@ -36,10 +40,19 @@ export default class App extends React.Component {
   }
 
   onEndGame() {
+    Request.finishCurrentGame().then()
+
     this.setState({
       isGameStarted: false,
+      isSavedGame: false,
       botCell: '',
       savedCells: [],
+    })
+  }
+
+  onContinueGame() {
+    this.setState({
+      isSavedGame: false,
     })
   }
 
@@ -54,6 +67,7 @@ export default class App extends React.Component {
       if (res.status === 200) {
         this.setState({
           isGameStarted: true,
+          isSavedGame: true,
           savedCells: res.data
         });
       }
@@ -61,29 +75,27 @@ export default class App extends React.Component {
   }
 
   render() {
-    if (this.state.isGameStarted) {
-      return (
-        <div>
-          <Field
-            isGameStarted={this.state.isGameStarted}
-            botCell={this.state.botCell}
-            savedCells={this.state.savedCells}
-            onEndGame={this.onEndGame}
-            onStartGame={this.onStartGame}
-          />
-        </div>
-      )
-    }
-
     return (
-      <div>
-        <p>Выбери кто начнет игру:</p>
-        <Selector
-          isGameStarted={this.state.isGameStarted}
-          whoStartGame={this.state.whoStartGame}
-          onStartGame={this.onStartGame}
-          onChangeWhoStartGame={this.onChangeWhoStartGame}
-        />
+      <div className='wrapper'>
+        {
+          this.state.isGameStarted
+            ?
+            <Field
+              isGameStarted={this.state.isGameStarted}
+              isSavedGame={this.state.isSavedGame}
+              botCell={this.state.botCell}
+              savedCells={this.state.savedCells}
+              onEndGame={this.onEndGame}
+              onStartGame={this.onStartGame}
+              onContinueGame={this.onContinueGame}
+            />
+            :
+            <Selector
+              whoStartGame={this.state.whoStartGame}
+              onStartGame={this.onStartGame}
+              onChangeWhoStartGame={this.onChangeWhoStartGame}
+            />
+        }
       </div>
     )
   }

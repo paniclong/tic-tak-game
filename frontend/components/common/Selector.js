@@ -4,36 +4,31 @@ import PropTypes from 'prop-types';
 import Input from "./Input";
 import Button from "./Button";
 
+import '../style/Selector.scss'
+
 const inputs = [
   {"value": 'bot', 'text': 'Бот'},
   {"value": 'player', 'text': 'Игрок'},
-  {"value": 'random', 'text': 'Рандом'},
+  {"value": 'random', 'text': 'Случайно'},
 ]
 
 export default class Selector extends React.Component {
   static propTypes = {
-    isGameStarted: PropTypes.bool,
     whoStartGame: PropTypes.string,
     onStartGame: PropTypes.func,
     onChangeWhoStartGame: PropTypes.func,
   }
 
   static defaultProps = {
-    isGameStarted: false,
     whoStartGame: 'bot',
     onStartGame: null,
     onChangeWhoStartGame: null,
   }
 
   render() {
-    if (this.props.isGameStarted === true) {
-      return (
-        <div/>
-      )
-    }
-
     return (
-      <div>
+      <div className='selector'>
+        <p>Выберите кто начнет игру:</p>
         {
           inputs.map((robot) =>
             <Input
