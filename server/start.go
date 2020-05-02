@@ -26,6 +26,7 @@ type Game struct {
 	UID      string             // Уникальный идентификатор игры
 }
 
+// Обертка для handler'ов, для доступа к сессии и и логгеру
 type Server struct {
 	Store   *sessions.CookieStore
 	Session *sessions.Session
@@ -38,8 +39,10 @@ type JsonParsedDataFromRequest struct {
 	Cell     int
 }
 
+// Домен фронта, для CORS
 var frontServer = "http://" + os.Getenv("FRONT_DOMAIN") + ":" + os.Getenv("FRONT_PORT")
 
+// Маппинг полей фронт:сервер
 var mapping = map[string][]int{
 	"0": {0, 0},
 	"1": {0, 1},
@@ -163,9 +166,18 @@ func (server *Server) writeInLogWhenStartedGame(currentGame *Game) {
 	server.Logger.Write(message)
 }
 
-// Метод выполняем несколько важных функций
+func (server *Server) sendResponse(w http.ResponseWriter, d []byte, c int) {
+	_, err := w.Write(d)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w.WriteHeader(c)
+}
+
+// Метод выполняет несколько важных функций
 // 1. Если игра уже была стартанута, то кидаем 403
-// 2. Если игра ещё не стартанута, то инициализуем иначальное состоения игры и сохраняем в сессии
+// 2. Если игра ещё не была стартанута, то инициализуем изначальное состояние игры и сохраняем её в сессию
 // 3. Если игру стартанул бот, то инициализируем бота, ставим рандомную ячейку и возвращаем её на фронт
 func (server *Server) startGame(writer http.ResponseWriter, request *http.Request) {
 	server.setHeaders(writer)
@@ -234,10 +246,7 @@ func (server *Server) startGame(writer http.ResponseWriter, request *http.Reques
 
 	encodedData, _ := json.Marshal(response)
 
-	_, err = writer.Write(encodedData)
-	if err != nil {
-		log.Fatal(err)
-	}
+	server.sendResponse(writer, encodedData, http.StatusOK)
 }
 
 // Метод выполняет несколько функций:
@@ -245,7 +254,7 @@ func (server *Server) startGame(writer http.ResponseWriter, request *http.Reques
 // 2. Проверяет, что у пользователя собралась комбинация, если да - то завершает игру
 // 3. Проверяет, если у бота нарушилась комбинация из-за пользователя, то -
 // 	  если есть доступные комбинации генерирует новую комбинацию для бота,
-//	  ничья и завершает игру
+//	  в противном случае ничья и завершает игру
 // 4. Ставит новую ячейку для бота и смотрит, собралась комбнация, если да - победил бот и завершает игру,
 //    в противном случае возвращает ячейку проставленную ботом
 func (server *Server) setCell(writer http.ResponseWriter, request *http.Request) {
@@ -278,15 +287,13 @@ func (server *Server) setCell(writer http.ResponseWriter, request *http.Request)
 
 			server.Session.Values["game"] = nil
 			err := server.Session.Save(request, writer)
-
-			server.Logger.Write("Player win")
-
-			_, err = writer.Write(encodedData)
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			writer.WriteHeader(http.StatusOK)
+			server.Logger.Write("Player win")
+
+			server.sendResponse(writer, encodedData, http.StatusOK)
 
 			return
 		}
@@ -306,15 +313,13 @@ func (server *Server) setCell(writer http.ResponseWriter, request *http.Request)
 
 			server.Session.Values["game"] = nil
 			err := server.Session.Save(request, writer)
-
-			server.Logger.Write("Draw")
-
-			_, err = writer.Write(encodedData)
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			writer.WriteHeader(http.StatusOK)
+			server.Logger.Write("Draw")
+
+			server.sendResponse(writer, encodedData, http.StatusOK)
 
 			return
 		}
@@ -340,15 +345,13 @@ func (server *Server) setCell(writer http.ResponseWriter, request *http.Request)
 
 		server.Session.Values["game"] = nil
 		err := server.Session.Save(request, writer)
-
-		server.Logger.Write("Bot win")
-
-		_, err = writer.Write(encodedData)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		writer.WriteHeader(http.StatusOK)
+		server.Logger.Write("Bot win")
+
+		server.sendResponse(writer, encodedData, http.StatusOK)
 
 		return
 	}
@@ -360,12 +363,7 @@ func (server *Server) setCell(writer http.ResponseWriter, request *http.Request)
 
 	encodedData, _ := json.Marshal(response)
 
-	_, err := writer.Write(encodedData)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	writer.WriteHeader(http.StatusOK)
+	server.sendResponse(writer, encodedData, http.StatusOK)
 }
 
 // Проверяем, что игра уже была запущена и возвращаем ячейки, которые заполены ботом и игроком
@@ -408,12 +406,7 @@ func (server *Server) checkCurrentSessionGame(writer http.ResponseWriter, reques
 
 	encodedData, _ := json.Marshal(response)
 
-	_, err := writer.Write(encodedData)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	writer.WriteHeader(http.StatusOK)
+	server.sendResponse(writer, encodedData, http.StatusOK)
 }
 
 // Принудительно завершаем игру, если нужно
@@ -437,9 +430,12 @@ func (server *Server) forceFinishCurrentGame(writer http.ResponseWriter, request
 	writer.WriteHeader(http.StatusOK)
 }
 
+// Входная точка
 func Run() {
+	// Нужно для того, чтобы в структуру можно было записать в сессию
 	gob.Register(&Game{})
 
+	// Генерируем куки и ставим настройки
 	var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECURE_KEY")))
 	store.Options = &sessions.Options{
 		Domain:   "localhost",
@@ -448,8 +444,7 @@ func Run() {
 		HttpOnly: true,
 	}
 
-	var server = *new(Server)
-
+	// Создаем логгер
 	err, logger := CreateLogger()
 	if err != nil {
 		log.Fatal("Cannot create log")
@@ -457,9 +452,12 @@ func Run() {
 		return
 	}
 
+	var server = *new(Server)
+
 	server.Logger = logger
 	server.Store = store
 
+	// Инициализурем роуты
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/start", server.startGame)
 	http.HandleFunc("/set", server.setCell)
@@ -468,10 +466,11 @@ func Run() {
 
 	fmt.Println("Server successfully started!")
 
+	// Сам старт сервера
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("SERVER_PORT"), nil))
 }
 
-// Метод заглушка
+// Метод заглушка для корневого запроса
 func rootHandler(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodGet {
 		writer.Header().Set("Connection", "close")
@@ -494,6 +493,7 @@ func rootHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
+// Проверяем свободная ли ячейка или нет для игрока
 func (game *Game) checkCell() bool {
 	var cell = game.Player.GetCurrentCell()
 
@@ -504,6 +504,7 @@ func (game *Game) checkCell() bool {
 	return false
 }
 
+// Меняем внутриигровое поле
 func (game *Game) changeField(isBot bool) {
 	var cell []int
 
