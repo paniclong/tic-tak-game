@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"fmt"
 	"math/rand"
 	"reflect"
 )
@@ -130,8 +129,6 @@ func (bot *Bot) CheckPreSetCombination(field *[size][size]string) *Bot {
 	var array [][]int
 
 	for _, value := range bot.LeftCells {
-		fmt.Println("field ", field[value[0]][value[1]])
-		fmt.Println("value ", value)
 		if field[value[0]][value[1]] == " " {
 			array = append(array, value)
 		}
